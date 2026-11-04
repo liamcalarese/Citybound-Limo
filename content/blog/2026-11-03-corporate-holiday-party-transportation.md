@@ -2,7 +2,7 @@
 title: "Corporate Holiday Party Transportation in Lake Norman and Charlotte: Make Your Company's Celebration One to Remember"
 date: 2026-11-03
 description: Plan stress-free corporate holiday party transportation in Lake Norman and Charlotte, NC — choosing the right vehicle, building your itinerary, planning the return trip and more.
-image: assets/img/hero-charlotte-night.jpg
+image: /assets/img/hero-charlotte-night.jpg
 image_alt: Citybound Limo Sprinter in Uptown Charlotte at night
 ---
 
@@ -20,7 +20,7 @@ Professional corporate transportation eliminates those concerns while creating a
 
 When employees and guests travel together, the excitement starts before they even reach the venue. They can enjoy music, socialize with coworkers, take pictures, and get into the holiday spirit without worrying about driving.
 
-Planning a company dinner in Uptown Charlotte? Organizing a [holiday lights tour](tours.html)? Maybe your celebration includes dinner, drinks, and an afterparty at another location. Having private transportation throughout the evening keeps everyone together and makes moving between destinations simple.
+Planning a company dinner in Uptown Charlotte? Organizing a [holiday lights tour](/tours/)? Maybe your celebration includes dinner, drinks, and an afterparty at another location. Having private transportation throughout the evening keeps everyone together and makes moving between destinations simple.
 
 Most importantly, providing professional chauffeured transportation gives guests a responsible transportation option after an evening of holiday festivities.
 
@@ -44,7 +44,7 @@ If your company is planning a larger celebration, a large party bus can make the
 
 The best vehicle depends on your guest count, destinations, schedule, and the atmosphere you want to create.
 
-When requesting a quote, provide your estimated passenger count, pickup and drop-off locations, event schedule, and any additional stops. This allows us to recommend the most appropriate transportation option for your company's needs. You can compare our vehicles on the [fleet page](fleet.html).
+When requesting a quote, provide your estimated passenger count, pickup and drop-off locations, event schedule, and any additional stops. This allows us to recommend the most appropriate transportation option for your company's needs. You can compare our vehicles on the [fleet page](/fleet/).
 
 ## Plan Your Corporate Holiday Transportation Itinerary in Advance
 

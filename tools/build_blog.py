@@ -5,8 +5,8 @@ Build the Citybound Limo blog.
     python3 tools/build_blog.py
 
 Reads every Markdown file in content/blog/ and writes:
-  - blog.html            the blog index (newest post first)
-  - blog/<slug>.html     one page per post
+  - blog/index.html          the blog index (newest post first)  -> /blog/
+  - blog/<slug>/index.html   one page per post                   -> /blog/<slug>/
 
 The header, footer and <head> are copied from index.html, so blog pages
 always match the rest of the site. No third-party packages are needed.
@@ -22,7 +22,9 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 POSTS_DIR = ROOT / "content" / "blog"
 OUT_DIR = ROOT / "blog"
-DEFAULT_IMAGE = "assets/img/hero-charlotte-night.jpg"
+SITE = "https://cityboundlimo.com"
+PAGES = {"fleet", "services", "tours", "gallery", "blog", "contact"}
+DEFAULT_IMAGE = "/assets/img/hero-charlotte-night.jpg"
 
 
 # --------------------------------------------------------------------------
@@ -155,7 +157,7 @@ def load_posts():
             "date": date,
             "date_label": f"{date:%B} {date.day}, {date.year}",
             "author": meta.get("author", "Citybound Limo"),
-            "image": meta.get("image") or DEFAULT_IMAGE,
+            "image": site_url(meta.get("image") or DEFAULT_IMAGE),
             "image_alt": meta.get("image_alt", meta["title"]),
             "excerpt": excerpt,
             "slug": slug,
@@ -172,6 +174,32 @@ def load_posts():
 
 
 # --------------------------------------------------------------------------
+# Links
+# --------------------------------------------------------------------------
+def site_url(url):
+    """Turn a link written in a post into a clean site path.
+
+    fleet.html -> /fleet/      contact.html#quote -> /contact/#quote
+    assets/img/x.jpg -> /assets/img/x.jpg      external links unchanged
+    """
+    if url.startswith(("http:", "https:", "mailto:", "tel:", "sms:", "#", "/", "data:")):
+        return url
+    url = re.sub(r"^(\.\./)+", "", url)
+    m = re.match(r"^([\w-]+)\.html([#?].*)?$", url)
+    if m:
+        name, rest = m.group(1), m.group(2) or ""
+        return ("/" if name == "index" else f"/{name}/") + rest
+    m = re.match(r"^([\w-]+)/?([#?].*)?$", url)
+    if m and m.group(1) in PAGES:
+        return f"/{m.group(1)}/" + (m.group(2) or "")
+    return "/" + url
+
+
+def fix_links(fragment):
+    return re.sub(r'\b(href|src)="([^"]*)"', lambda m: f'{m.group(1)}="{site_url(m.group(2))}"', fragment)
+
+
+# --------------------------------------------------------------------------
 # Page shell (taken from index.html)
 # --------------------------------------------------------------------------
 def load_shell():
@@ -179,8 +207,8 @@ def load_shell():
     head, rest = idx.split('  <main id="main">', 1)
     tail = rest.split("  </main>", 1)[1]
     head = re.sub(r'\s*<script type="application/ld\+json">.*?</script>', "", head, flags=re.S)
-    head = head.replace('<a href="index.html" aria-current="page">', '<a href="index.html">')
-    head = head.replace('<a href="blog.html">', '<a href="blog.html" aria-current="page">', 1)
+    head = head.replace('<a href="/" aria-current="page">', '<a href="/">')
+    head = head.replace('<a href="/blog/">', '<a href="/blog/" aria-current="page">', 1)
     return head, tail
 
 
@@ -190,30 +218,14 @@ def set_meta(head, title, desc, image):
     head = re.sub(r'<meta name="description" content=".*?">', f'<meta name="description" content="{e(desc)}">', head)
     head = re.sub(r'<meta property="og:title" content=".*?">', f'<meta property="og:title" content="{e(title)}">', head)
     head = re.sub(r'<meta property="og:description" content=".*?">', f'<meta property="og:description" content="{e(desc)}">', head)
-    head = re.sub(r'<meta property="og:image" content=".*?">', f'<meta property="og:image" content="{e(image)}">', head)
+    head = re.sub(r'<meta property="og:image" content=".*?">', f'<meta property="og:image" content="{e(SITE + image)}">', head)
     return head
 
 
-def to_subdir(page):
-    """Rewrite root-relative links (assets/..., fleet.html) for pages inside blog/."""
-    keep = ("http:", "https:", "mailto:", "tel:", "sms:", "#", "/", "data:", "../")
-
-    def fix(m):
-        attr, url = m.group(1), m.group(2)
-        if url.startswith(keep):
-            return m.group(0)
-        if attr == "content" and not url.startswith("assets/"):
-            return m.group(0)  # meta tags like viewport / theme-color
-        return f'{attr}="../{url}"'
-
-    page = re.sub(r'\b(href|src|data-src|content)="([^"]*)"', fix, page)
-    return page.replace("url('assets/", "url('../assets/")
-
-
-def card(p, prefix="", featured=False):
+def card(p, featured=False):
     cls = "post-card featured" if featured else "post-card"
     h = "h2" if featured else "h3"
-    return f'''          <a class="{cls} reveal" href="{prefix}{p["slug"]}.html">
+    return f"""          <a class="{cls} reveal" href="/blog/{p["slug"]}/">
             <div class="post-card-media"><img src="{p["image"]}" alt="{html.escape(p["image_alt"])}" loading="lazy"></div>
             <div class="post-card-body">
               <div class="post-meta"><span>{p["date_label"]}</span><span>{p["minutes"]} min read</span></div>
@@ -221,7 +233,12 @@ def card(p, prefix="", featured=False):
               <p>{html.escape(p["excerpt"])}</p>
               <span class="read-more">Read article <svg><use href="#i-arrow"/></svg></span>
             </div>
-          </a>'''
+          </a>"""
+
+
+def write(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
 
 
 def build():
@@ -231,21 +248,26 @@ def build():
     posts = load_posts()
     OUT_DIR.mkdir(exist_ok=True)
 
-    # Remove pages for posts that were deleted or renamed
-    live = {p["slug"] + ".html" for p in posts}
+    # Remove pages for posts that were deleted or renamed (and old blog/<slug>.html files)
+    live = {p["slug"] for p in posts}
     for old in OUT_DIR.glob("*.html"):
-        if old.name not in live:
+        if old.name != "index.html":
             old.unlink()
             print(f"  removed       blog/{old.name}")
+    for d in OUT_DIR.iterdir():
+        if d.is_dir() and d.name not in live and [x.name for x in d.iterdir()] == ["index.html"]:
+            (d / "index.html").unlink()
+            d.rmdir()
+            print(f"  removed       blog/{d.name}/")
 
     # ---- Index ----
     if posts:
-        cards = [card(posts[0], "blog/", featured=True)] + [card(p, "blog/") for p in posts[1:]]
+        cards = [card(posts[0], featured=True)] + [card(p) for p in posts[1:]]
         listing = '        <div class="post-grid">\n' + "\n".join(cards) + "\n        </div>"
     else:
         listing = '        <div class="empty-state">No posts yet — check back soon.</div>'
-    index_main = f'''    <section class="page-hero">
-      <div class="hero-bg" style="background-image:url('assets/img/g-escalade-mtn.jpg')"></div>
+    index_main = f"""    <section class="page-hero">
+      <div class="hero-bg" style="background-image:url('/assets/img/g-escalade-mtn.jpg')"></div>
       <div class="container">
         <span class="eyebrow">Blog</span>
         <h1>News, tips &amp; travel ideas</h1>
@@ -258,19 +280,19 @@ def build():
 {listing}
       </div>
     </section>
-'''
+"""
     page = set_meta(head, "Blog | Citybound Limo — News, Tips & Travel Ideas",
                     "Travel tips, event planning advice and news from Citybound Limo, Charlotte's premier transportation service.",
-                    "assets/img/g-escalade-mtn.jpg")
-    (ROOT / "blog.html").write_text(page + '  <main id="main">\n' + index_main + "  </main>" + tail, encoding="utf-8")
-    print(f"  wrote         blog.html ({len(posts)} post{'s' if len(posts) != 1 else ''})")
+                    "/assets/img/g-escalade-mtn.jpg")
+    write(OUT_DIR / "index.html", page + '  <main id="main">\n' + index_main + "  </main>" + tail)
+    print(f"  wrote         blog/index.html ({len(posts)} post{'s' if len(posts) != 1 else ''})")
 
     # ---- Posts ----
     for p in posts:
         more = [q for q in posts if q is not p][:3]
         more_html = ""
         if more:
-            more_html = f'''
+            more_html = f"""
     <section class="section section-white">
       <div class="container">
         <div class="section-head"><span class="eyebrow">Keep Reading</span><h2>More from the blog</h2></div>
@@ -279,7 +301,7 @@ def build():
         </div>
       </div>
     </section>
-'''
+"""
         ld = '  <script type="application/ld+json">' + json.dumps({
             "@context": "https://schema.org",
             "@type": "BlogPosting",
@@ -287,13 +309,14 @@ def build():
             "datePublished": p["date"].isoformat(),
             "author": {"@type": "Organization", "name": p["author"]},
             "publisher": {"@type": "Organization", "name": "Citybound Limo"},
-            "image": "https://www.cityboundlimo.com/" + p["image"],
+            "image": SITE + p["image"],
+            "url": f"{SITE}/blog/{p['slug']}/",
             "description": p["excerpt"],
         }) + "</script>\n"
-        post_main = f'''    <section class="page-hero post-hero">
+        post_main = f"""    <section class="page-hero post-hero">
       <div class="hero-bg" style="background-image:url('{p["image"]}')"></div>
       <div class="container">
-        <a class="back-link" href="blog.html"><svg><use href="#i-left"/></svg> All posts</a>
+        <a class="back-link" href="/blog/"><svg><use href="#i-left"/></svg> All posts</a>
         <h1>{html.escape(p["title"])}</h1>
         <div class="post-meta"><span>{p["date_label"]}</span><span>{p["minutes"]} min read</span><span>By {html.escape(p["author"])}</span></div>
       </div>
@@ -303,7 +326,7 @@ def build():
     <section class="section">
       <div class="container">
         <article class="prose">
-{p["html"]}
+{fix_links(p["html"])}
         </article>
         <div class="cta-band post-cta">
           <div>
@@ -311,23 +334,17 @@ def build():
             <p>Book online in minutes, or call or text 980-358-4346 — we're available 24/7.</p>
           </div>
           <div class="cta-actions">
-            <a class="btn btn-gold" href="contact.html#quote">Book or Get a Quote</a>
+            <a class="btn btn-gold" href="/contact/#quote">Book or Get a Quote</a>
             <a class="btn btn-outline" href="tel:+19803584346"><svg><use href="#i-phone"/></svg> Call Now</a>
           </div>
         </div>
       </div>
     </section>
-{more_html}'''
+{more_html}"""
         page = set_meta(head, f'{p["title"]} | Citybound Limo Blog', p["excerpt"], p["image"])
         page = page.replace("</head>", ld + "</head>", 1)
-        full = page + '  <main id="main">\n' + post_main + "  </main>" + tail
-        # links inside post pages are written relative to the site root, then shifted into blog/
-        full = to_subdir(full)
-        # "more posts" cards live in the same folder
-        for q in more:
-            full = full.replace(f'href="../{q["slug"]}.html"', f'href="{q["slug"]}.html"')
-        (OUT_DIR / f'{p["slug"]}.html').write_text(full, encoding="utf-8")
-        print(f"  wrote         blog/{p['slug']}.html")
+        write(OUT_DIR / p["slug"] / "index.html", page + '  <main id="main">\n' + post_main + "  </main>" + tail)
+        print(f"  wrote         blog/{p['slug']}/index.html")
 
 
 if __name__ == "__main__":

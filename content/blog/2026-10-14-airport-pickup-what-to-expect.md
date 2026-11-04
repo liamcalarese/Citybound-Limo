@@ -2,7 +2,7 @@
 title: What to Expect From Your Airport Pickup
 date: 2026-10-14
 description: Flight tracking, meet & greet and complimentary wait time — here's exactly how a Citybound Limo airport pickup works, start to finish.
-image: assets/img/g-escalade-jet.jpg
+image: /assets/img/g-escalade-jet.jpg
 image_alt: Black Cadillac Escalade parked beside a private jet
 ---
 
@@ -27,7 +27,7 @@ Flights run late, bags take a while, and customs lines can be long. That's why e
 
 ## Choosing the right vehicle
 
-If you're traveling with luggage, vehicle choice matters. The **Cadillac Escalade** seats up to 6 and has dedicated luggage space, so it's our go-to for most airport runs. Larger groups with bags should choose the **Sprinter Passenger Van**, which seats up to 14 and also has room for luggage. See the full list on our [fleet page](fleet.html).
+If you're traveling with luggage, vehicle choice matters. The **Cadillac Escalade** seats up to 6 and has dedicated luggage space, so it's our go-to for most airport runs. Larger groups with bags should choose the **Sprinter Passenger Van**, which seats up to 14 and also has room for luggage. See the full list on our [fleet page](/fleet/).
 
 > Tip: When you book, include your flight number and airline. It lets us track your arrival precisely.
 
@@ -35,4 +35,4 @@ If you're traveling with luggage, vehicle choice matters. The **Cadillac Escalad
 
 Five-point harness and booster seats may be available. Just ask when you book so we can confirm.
 
-Ready to book? [Reserve your airport transfer online](contact.html#quote), or call or text us at 980-358-4346. We're available 24/7.
+Ready to book? [Reserve your airport transfer online](/contact/#quote), or call or text us at 980-358-4346. We're available 24/7.

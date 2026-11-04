@@ -2,7 +2,7 @@
 title: How to Choose the Right Vehicle for Your Group
 date: 2026-10-28
 description: From an Escalade for two to a Sprinter limousine for fourteen — a quick guide to picking the right Citybound Limo vehicle for your trip.
-image: assets/img/fleet-lineup.jpg
+image: /assets/img/fleet-lineup.jpg
 image_alt: Citybound Limo vehicles lined up in front of a fireworks display
 ---
 
@@ -32,4 +32,4 @@ Our limousines, Sprinters and vans have a 4-hour minimum booking.
 
 > Still not sure? Call or text 980-358-4346 with your group size and plans, and we'll recommend the best fit.
 
-Compare every vehicle side by side on our [fleet page](fleet.html), or [book online](contact.html#quote).
+Compare every vehicle side by side on our [fleet page](/fleet/), or [book online](/contact/#quote).
