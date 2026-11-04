@@ -159,6 +159,7 @@ def load_posts():
             "image_alt": meta.get("image_alt", meta["title"]),
             "excerpt": excerpt,
             "slug": slug,
+            "file": f.name,
             "minutes": max(1, math.ceil(words / 220)),
             "html": markdown(body),
         })
@@ -166,7 +167,7 @@ def load_posts():
     dupes = {s for s in slugs if slugs.count(s) > 1}
     if dupes:
         sys.exit(f"Two posts share the same slug: {', '.join(dupes)}")
-    posts.sort(key=lambda p: p["date"], reverse=True)
+    posts.sort(key=lambda p: (p["date"], p["file"]), reverse=True)  # same date: later filename first
     return posts
 
 
